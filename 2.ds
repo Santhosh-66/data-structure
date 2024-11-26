@@ -1,0 +1,84 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct {
+    int* array;
+    int size;
+    int capacity;
+} DynamicArray;
+
+DynamicArray* initializeArray() {
+    DynamicArray* dynArr = (DynamicArray*)malloc(sizeof(DynamicArray));
+    dynArr->array = (int*)malloc(2 * sizeof(int)); 
+    dynArr->size = 0;
+    dynArr->capacity = 2;
+    return dynArr;
+}
+
+void appendToArray(DynamicArray* dynArr, int value) {
+    if (dynArr->size == dynArr->capacity) {
+        dynArr->capacity *= 2;
+        dynArr->array = (int*)realloc(dynArr->array, dynArr->capacity * sizeof(int));
+    }
+    dynArr->array[dynArr->size++] = value;
+}
+
+void freeArray(DynamicArray* dynArr) {
+    free(dynArr->array);
+    free(dynArr);
+}
+
+int* dynamicArray(int n, int queries[][3], int q, int* resultSize) {
+    // Initialize the arrays
+    DynamicArray** seqList = (DynamicArray**)malloc(n * sizeof(DynamicArray*));
+    for (int i = 0; i < n; i++) {
+        seqList[i] = initializeArray();
+    }
+
+    int lastAnswer = 0; 
+    int* results = (int*)malloc(q * sizeof(int));
+    *resultSize = 0;
+
+    for (int i = 0; i < q; i++) {
+        int queryType = queries[i][0];
+        int x = queries[i][1];
+        int y = queries[i][2];
+        int idx = (x ^ lastAnswer) % n;
+
+        if (queryType == 1) {
+            appendToArray(seqList[idx], y);
+        } else if (queryType == 2) {
+            lastAnswer = seqList[idx]->array[y % seqList[idx]->size];
+            results[(*resultSize)++] = lastAnswer;
+        }
+    }
+
+    for (int i = 0; i < n; i++) {
+        freeArray(seqList[i]);
+    }
+    free(seqList);
+
+    return results;
+}
+
+int main() {
+    int n, q;
+    scanf("%d %d", &n, &q);
+
+    int queries[q][3];
+    for (int i = 0; i < q; i++) {
+        scanf("%d %d %d", &queries[i][0], &queries[i][1], &queries[i][2]);
+    }
+
+    int resultSize;
+    int* results = dynamicArray(n, queries, q, &resultSize);
+
+    for (int i = 0; i < resultSize; i++) {
+        printf("%d\n", results[i]);
+    }
+
+    free(results);
+
+    return 0;
+}
